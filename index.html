@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content="text/html; charset=windows-1252" http-equiv="content-type">
+    <title>SISTEMA DE LOCALIZACION WIFI</title>
+    <style type="text/css">
+#titulo {  
+  font-family: Arial, Helvetica, sans-serif;  
+  font-size: 24px;  
+  font-weight: bold;  
+  text-align: center;
+}
+
+#explain {  
+  font-family: Arial, Helvetica, sans-serif;  
+  font-size: 14px;  
+  padding-top: 5px;  
+  padding-right: 5px;  
+  padding-bottom: 5px;  
+  padding-left: 5px;  
+  margin-top: 5px;  
+  margin-right: 5px;  
+  margin-bottom: 5px;  
+  margin-left: 5px;  
+  text-align: justify;
+}
+
+table {
+     border-width: 0pt;
+     margin-left: auto;
+     margin-right: auto
+}
+
+</style> <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
+    <script type="text/javascript">
+	
+	var lstnodeCapture;
+	var lstMobile;
+
+	function toDo() {
+		loadData();
+		loadSelect("nodeCapture", lstnodeCapture.sort());
+		loadSelect("dispositivo", lstMobile.sort());
+	}
+	
+	  function loadData() {
+		  // Create the data table.
+    	  
+		  var jsonData2 = $.ajax({
+          url: "getdata/listfield.php?field=fromMAC",
+          dataType:"json",
+          async: false
+          }).responseText;
+          lstMobile = $.parseJSON(jsonData2);
+          
+          var jsonData = $.ajax({
+          url: "getdata/listfield.php?field=nodeMAC",
+          dataType:"json",
+          async: false
+          }).responseText;
+          lstnodeCapture = $.parseJSON(jsonData);
+	  }
+	  
+	  function loadSelect(id, data) {
+		  //alert(data);
+		  var select = document.getElementById(id);
+		  for (i=0;i<data.length;i++) {
+			   select.options[select.options.length] = new Option(data[i], data[i]);
+		  }
+	  }
+	  
+ </script>
+  </head>
+  <body onload="toDo()">
+    <p id="titulo">SISTEMA DE LOCALIZACIÓN WIFI</p>
+    <hr style="width: 60%; height: 3px; color: black;"><br>
+    <table style="width: 582px; height: 193px;" border="0">
+      <tbody>
+        <tr>
+          <td id="explain" colspan="2" rowspan="1">Este panel de control, ha
+            sido creado como complemento al trabajo del Sistema de Localización
+            WIFI, para tener una repressntación visual más clara que nos
+            permtita entender mejor los frames que se intercanvian en una
+            comunicacion WIFI.</td>
+        </tr>
+        <tr>
+          <td id="explain" style="width: 246.467px;">* Mediante la elección de
+            uno de los NodeCapture, podemos monitorizar en tiempo real los
+            frames que captura este dispositivo</td>
+          <td style="width: 424.533px;">
+            <form name="frmnodeCapture" method="get" action="distribuidor.php" enctype="text/plain">
+              <select required="required" name="MAC" id="nodeCapture">
+              </select>
+              <input type="hidden" name="interval" value="5"></input>
+              <button value="nodecapture" name="page">Selecciona</button><br>
+            </form>
+          </td>
+        </tr>
+        <tr>
+          <td id="explain">* Podemos escoger uno de los dispositivos
+            monitorizados para poder observar, por ejemplo, que tramas emite </td>
+          <td>
+            <form name="frmdispositivo" method="get" action="distribuidor.php" enctype="text/plain">
+            <select required="required" name="MAC" id="dispositivo">
+            </select>
+            <input type="hidden" name="interval" value="5"></input>
+            <button value="dispositivo" name="page">Selecciona</button>
+            <br>
+            </form>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <br>
+  </body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content="text/html; charset=windows-1252" http-equiv="content-type">
+    <title>Path Loss</title>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
+    <script type="text/javascript">
+      // Load the Visualization API and the piechart package.
+      google.load('visualization', '1.0', {'packages':['corechart', 'table']});
+      // Set a callback to run when the Google Visualization API is loaded.
+      google.setOnLoadCallback(dashBoard);
+      // Callback that creates and populates a data table,
+      // instantiates the pie chart, passes in the data and
+      // draws it.
+       
+      function dashBoard() {
+		  var chart = new google.visualization.LineChart(document.getElementById('chart_div_pathloss'));
+          var jsonData = $.ajax({
+             url: "./getdata/pathloss.php",
+             dataType:"json",
+             async: false
+          }).responseText;
+          var table = $.parseJSON(jsonData);
+          var data = new google.visualization.arrayToDataTable(table);
+         
+          var options = {'title':'Modelo Path-loss: ',
+                       'width':1000,
+                       'height':500,
+                       'vAxis': {title: "RSSI [dBm]"},
+                       'hAxis': {title: "distancia [m]"}
+                       };
+
+          chart.draw(data, options);
+       }	   
+      
+    </script>
+    <style type="text/css">
+#titulo {  
+  font-family: Arial, Helvetica, sans-serif;  
+  font-size: 24px;  
+  font-weight: bold;  
+  text-align: center;
+}
+
+#explain {  
+  font-family: Arial, Helvetica, sans-serif;  
+  font-size: 14px;  
+  padding-top: 5px;  
+  padding-right: 5px;  
+  padding-bottom: 5px;  
+  padding-left: 5px;  
+  margin-top: 5px;  
+  margin-right: 5px;  
+  margin-bottom: 5px;  
+  margin-left: 5px;  
+  text-align: justify;
+}
+
+table {
+     border-width: 0pt;
+     margin-left: auto;
+     margin-right: auto
+}
+
+</style> </head>
+  <body>
+    <p id="titulo">MODELO PATH LOSS</p>
+    <hr style="width: 60%; height: 3%; color: black;"><br>
+    <table>
+      <tbody>
+        <tr>
+          <td>
+            <div id="chart_div_pathloss"><br>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><br>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p><br>
+    </p>
+    
+  </body>
+</html>

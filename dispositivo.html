@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content="text/html; charset=windows-1252" http-equiv="content-type">
+    <title>Dispositivos</title>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
+    <script type="text/javascript">
+      // Load the Visualization API and the piechart package.
+      google.load('visualization', '1.0', {'packages':['corechart', 'table']});
+      // Set a callback to run when the Google Visualization API is loaded.
+      google.setOnLoadCallback(dashBoard);
+      // Callback that creates and populates a data table,
+      // instantiates the pie chart, passes in the data and
+      // draws it.
+
+	  function getUrlVars() {
+		  var vars = {};
+		  var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+			  vars[key] = value;
+		  });
+		  return vars;
+      }
+
+      var datacol=[];
+      var datalin=[];
+      var chart= [];
+      var line=[];
+      var nodes=[];
+      var MAC=getUrlVars()["MAC"];
+      var interval=getUrlVars()["interval"];
+
+     
+      function dashBoard() {
+		  chart[0] = new google.visualization.ColumnChart(document.getElementById('chart_div_col0'));
+		  chart[1] = new google.visualization.ColumnChart(document.getElementById('chart_div_col1'));
+          chart[2] = new google.visualization.ColumnChart(document.getElementById('chart_div_col2'));
+          chart[3] = new google.visualization.ColumnChart(document.getElementById('chart_div_col3'));
+          
+          line[0] = new google.visualization.LineChart(document.getElementById('line_div_col0'));
+		  line[1] = new google.visualization.LineChart(document.getElementById('line_div_col1'));
+          line[2] = new google.visualization.LineChart(document.getElementById('line_div_col2'));
+          line[3] = new google.visualization.LineChart(document.getElementById('line_div_col3'));
+          
+          
+		  loadData();
+		  draw();
+		  setInterval(Repaint, 5000 );
+	  }
+	  
+	  function Repaint() {
+		  loadData();
+		  draw();
+	  }
+	  
+	  // 
+	  function loadData() {
+		  // Create the data table.
+          var jsonData = $.ajax({
+          url: "./getdata/listfield.php?field=nodeMAC&queryfield=fromMAC&queryvalue="+MAC+"&interval="+interval,
+          dataType:"json",
+          async: false
+          }).responseText;
+          nodes = $.parseJSON(jsonData);
+          nodes.sort();
+	  }
+	  
+	  function draw () {
+		 for (i=0;i<nodes.length;i++) {	  
+			jsonData = $.ajax({
+			url: "./getdata/nodecapture.php?nodeMAC="+nodes[i]+"&fromMAC="+MAC+"&interval="+interval ,
+			dataType:"json",
+			async: false
+			}).responseText;
+			var table = $.parseJSON(jsonData);
+			datacol[i] = new google.visualization.arrayToDataTable(table);
+			drawCol(chart[i], datacol[i], nodes[i]);
+		  }
+		  
+		  for (i=0;i<nodes.length;i++) {
+			  
+	  	  
+			jsonData = $.ajax({
+			url: "./getdata/timeline.php?nodeMAC="+nodes[i]+"&fromMAC="+MAC+"&interval="+interval ,
+			dataType:"json",
+			async: false
+			}).responseText;
+			var table = $.parseJSON(jsonData);
+			datalin[i] = new google.visualization.arrayToDataTable(table);
+			drawLin(line[i], datalin[i], nodes[i]);
+		  }
+		  
+	  }
+	   
+			
+      function drawCol(chart, data, node) {
+        // Set chart options
+        var options = {'title':'NodeCapture: ' + node ,
+                       'width':600,
+                       'height':180,
+                       'vAxis': {title: "Frames"},
+                       'hAxis': {title: "RSSI [dBm]"}
+                       };
+
+        chart.draw(data, options);
+      }
+      
+      function drawLin(chart, data, node) {
+	     var options = {'title':'NodeCapture: ' + node ,
+                       'width':600,
+                       'height':180,
+                       'vAxis': {title: "RSSI [dBm]"},
+                       'hAxis': {title: "Timestamp"}
+                       };
+		chart.draw(data, options);
+      }
+      
+    </script>
+    <style type="text/css">
+#titulo {  
+  font-family: Arial, Helvetica, sans-serif;  
+  font-size: 24px;  
+  font-weight: bold;  
+  text-align: center;
+}
+
+#explain {  
+  font-family: Arial, Helvetica, sans-serif;  
+  font-size: 14px;  
+  padding-top: 5px;  
+  padding-right: 5px;  
+  padding-bottom: 5px;  
+  padding-left: 5px;  
+  margin-top: 5px;  
+  margin-right: 5px;  
+  margin-bottom: 5px;  
+  margin-left: 5px;  
+  text-align: justify;
+}
+
+table {
+     border-width: 0pt;
+     margin-left: auto;
+     margin-right: auto
+}
+
+</style> </head>
+  <body>
+    <p id="titulo">DISPOSITIVO MONITORIZADO</p>
+    <hr style="width: 60%; height: 3%; color: black;"><br>
+    <table>
+      <tbody>
+        <tr>
+          <td>
+            <div id="chart_div_col0"><br>
+            </div>
+          </td>
+          <td><div id="line_div_col0"><br>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><div id="chart_div_col1"><br>
+            </div>
+          </td>
+          <td><div id="line_div_col1"><br>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><div id="chart_div_col2"><br>
+            </div>
+          </td>
+          <td><div id="line_div_col2"><br>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><div id="chart_div_col3"><br>
+            </div>
+          </td>
+          <td><div id="line_div_col3"><br>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p><br>
+    </p>
+    
+  </body>
+</html>
