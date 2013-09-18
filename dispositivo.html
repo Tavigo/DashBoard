@@ -62,7 +62,7 @@
           async: false
           }).responseText;
           nodes = $.parseJSON(jsonData);
-          nodes.sort();
+          nodes.sort();  
 	  }
 	  
 	  function draw () {
@@ -99,7 +99,8 @@
                        'width':600,
                        'height':180,
                        'vAxis': {title: "Frames"},
-                       'hAxis': {title: "RSSI [dBm]"}
+                       'hAxis': {title: "RSSI [dBm]", minValue : 0},
+                       'legend' : { position : 'none' }
                        };
 
         chart.draw(data, options);
@@ -110,7 +111,8 @@
                        'width':600,
                        'height':180,
                        'vAxis': {title: "RSSI [dBm]"},
-                       'hAxis': {title: "Timestamp"}
+                       'hAxis': {title: "Timestamp"},
+                       'legend' : { position : 'bottom' }
                        };
 		chart.draw(data, options);
       }
@@ -148,6 +150,7 @@ table {
   <body>
     <p id="titulo">DISPOSITIVO MONITORIZADO</p>
     <hr style="width: 60%; height: 3%; color: black;"><br>
+	<p id="explain">MAC: <script>document.write(MAC);</script></p></center>
     <table>
       <tbody>
         <tr>

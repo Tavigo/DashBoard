@@ -26,13 +26,15 @@
       var interval=getUrlVars()["interval"]
 
       var data;
+      var datapie;
       var chart;
-      var table
+      var table;
       var options = {'title':'NodeCapture: ' + MAC ,
                        'width':600,
                        'height':300,
                        'vAxis': {title: "Frames"},
-                       'hAxis': {title: "RSSI [dBm]"}
+                       'hAxis': {title: "RSSI [dBm]", minValue : 0},
+                       'legend' : { position : 'none' }
                        };                
       var opttbl = {showRowNumber: true};
           opttbl['page'] = 'enable';
@@ -42,36 +44,50 @@
 		  opttbl['width']= 400;
 		  opttbl['height']= 300;               
  
+       var optionspie = {
+          title: 'Frames por Tipo.',
+          is3D: true,
+          width: 600,
+          legend : {position: 'right'}
+       };
       
       function dashBoard() {
 		  chart = new google.visualization.ColumnChart(document.getElementById('chart_div_col'));
-		  table = new google.visualization.Table(document.getElementById('chart_div_tbl'));
-		  loadData();
+		  pie = new google.visualization.PieChart(document.getElementById('chart_div_pie'));
+		  
 		  drawCol(options);
-		  drawTable();
+		  Repaint();
 		  setInterval(Repaint, 5000 );
 	  }
 	  
 	  function Repaint() {
 		  loadData();
 		  chart.draw(data, options);
-		  table.draw(data, opttbl);
+		  pie.draw(datapie, optionspie);
 	  }
 	  
 	  function loadData() {
 		  // Create the data table.
-          var jsonData = $.ajax({	  
+          var jsonData;
+          var table;
+           
+          // Cargamos los datos para el chart
+          jsonData= $.ajax({	  
           url: "./getdata/nodecapture.php?nodeMAC="+MAC+"&interval="+interval,
           dataType:"json",
           async: false
           }).responseText;
-          // Create our data table out of JSON data loaded from server.
-          var table = $.parseJSON(jsonData);
+          table = $.parseJSON(jsonData);
 		  data = new google.visualization.arrayToDataTable(table);
-	  }
-
-	  function drawTable() {
-			table.draw(data, opttbl);
+		  
+		  // Cargamos los datos para el pie
+		  jsonData= $.ajax({	  
+          url: "./getdata/framesbytype.php?nodeMAC="+MAC+"&interval="+interval,
+          dataType:"json",
+          async: false
+          }).responseText;
+          table = $.parseJSON(jsonData);
+		  datapie = new google.visualization.arrayToDataTable(table);		  
 	  }
 			
       function drawCol() {
@@ -85,11 +101,12 @@
           }
         }
         google.visualization.events.addListener(chart, 'select', selectHandler);
-        chart.draw(data, options);
       }
       
       function drawTable2 (topping) {
-		 var table2 = new google.visualization.Table(document.getElementById('chart_div_tbl2'));
+		  
+		  
+		 var table2 = new google.visualization.Table(document.getElementById('chart_div_tbl'));
 	
          var jsonData = $.ajax({
            url: "./getdata/framesbyrssi.php?nodeMAC="+MAC+"&RSSI="+topping+"&interval="+interval,
@@ -148,8 +165,8 @@
 
 table {
      border-width: 0pt;
-     margin-left: auto;
-     margin-right: auto
+     margin-left: 0;
+     margin-right: 0
 }
 
 </style> </head>
@@ -172,7 +189,7 @@ table {
             </div>
           </td>
           <td style="text-align: center;">
-            <div id="chart_div_tbl"><br>
+            <div id="chart_div_pie" style="width: 600px; height: 300px;"><br>
             </div>
           </td>
         </tr>
@@ -184,7 +201,7 @@ table {
         </tr>
         <tr>
           <td style="text-align: center; vertical-align: middle;" colspan="2" rowspan="1">
-            <div id="chart_div_tbl2"><br>
+            <div id="chart_div_tbl"><br>
             </div>
           </td>
         </tr>

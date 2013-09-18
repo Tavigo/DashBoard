@@ -1,5 +1,6 @@
 <?php
 	require_once("./lbshistory.php");
+	require_once("./rutinas.php");	
 
 	$field="";
 	$swquery=false;
@@ -19,8 +20,9 @@
 	// Si hay un intervalo, haremos un filtro con este intervalo
 	if (isset($_REQUEST["interval"])) {
 		$swquery=true;
-		$time_ini=time() - ($_REQUEST["interval"] * 60);
-		$query=array_merge($query,  array("SentTimestamp"=> array('$gt'=> $time_ini * 1000)));
+		$TopTimestamp = FechaUltimaSenal($query, $collection);
+		$time_ini=$TopTimestamp - ($_REQUEST["interval"] * 6000);
+		$query=array_merge($query,  array("SentTimestamp"=> array('$gt'=> $time_ini)));
 	}
 	
 	if ($swquery == true) {
