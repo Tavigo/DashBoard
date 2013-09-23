@@ -1,6 +1,7 @@
 <?php
-	require_once("./lbshistory.php");
 	require_once("./rutinas.php");	
+
+	$collection = Coleccion("lbshistory");
 
 	$field="";
 	$swquery=false;

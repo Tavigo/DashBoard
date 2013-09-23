@@ -1,7 +1,8 @@
 <?php
-	require_once("./lbsRSSIavg.php");
 	require_once("./rutinas.php");
 	
+	$collection = Coleccion("lbsRSSIavg");
+		
 	$query=[];
 	// filtro por nodeMAC
 	if (isset($_REQUEST["nodeMAC"])) {

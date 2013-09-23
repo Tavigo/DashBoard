@@ -1,6 +1,8 @@
 <?php
-	require_once("./lbshistory.php");
+
 	require_once("./rutinas.php");
+
+	$collection = Coleccion("lbshistory");
 
 	$query=[];
 	// filtro por nodeMAC
