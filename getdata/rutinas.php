@@ -1,5 +1,18 @@
 <?php
 
+// Función para acceder a una colección de la base de datos
+function Coleccion($nombrecoleccion) {
+	// conectar a la base de datos
+	//$m = new MongoClient("5.56.58.76");
+	$m = new MongoClient("127.0.0.1");
+	// seleccionar una base de datos
+	$db = $m->lbs;
+	// seleccionar una colección (equivalente a una tabla en una base de datos relacional)
+	$collection = $db->$nombrecoleccion;
+	
+	return $collection;
+}
+
 
 // Función que retorna el TimeStamp de la última señal capturada por un NodeCapture
 // de un MS

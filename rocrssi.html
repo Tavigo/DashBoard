@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<script type="text/JavaScript" src="./js/jsDraw2D.js"></script>
+		<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
+			<script type="text/JavaScript">
+				
+			
+				//var taula={};
+				var gr;
+				var col = [];
+				var pen = [];
+
+				
+				function load() {
+					Prepara();
+					LoadData();
+					//Dibuja();
+				}
+				
+				
+				function Prepara() {
+					//Create jsGraphics object
+					gr = new jsGraphics(document.getElementById("canvas"));
+					gr.setCoordinateSystem("cartecian")
+					gr.setOrigin(new jsPoint(600,400));
+					gr.setScale(30);
+					gr.showGrid();
+
+					col[0] = new jsColor("red");
+					col[1] = new jsColor("green");
+					col[2] = new jsColor("blue");
+					col[3] = new jsColor("yellow");
+
+					//Create jsPen object
+					for (i=0;i<col.length;i++) {
+						pen[i]= new jsPen(col[i],3);
+					}
+					
+				}
+				
+				function LoadData() {
+					var nodegroup=[];
+					var centros = {};
+					var i;
+					var j;
+					nodegroup = buscarDatos("fromMAC=50:7E:5D:43:15:15");
+					
+					
+					//centros = MatrizCentros(nodegroup);
+					
+					// Primero creamos una lista con las localizaciones d
+					// de los NodeCapture
+					for (var i = 0;i<nodegroup.nodeMACS.length;i++) {
+						centros[nodegroup.nodeMACS[i].nodeMAC] = new jsPoint(nodegroup.nodeMACS[i].x,nodegroup.nodeMACS[i].y);
+					}
+					
+				
+					var i;
+					for (var i=0;i<nodegroup.nodeMACS.length;i++) {
+						var taula = [];
+						//var a = new jsPoint(nodegroup.nodeMACS[i].x,nodegroup.nodeMACS[i].y);
+						var a = centros[nodegroup.nodeMACS[i].nodeMAC];
+						taula[taula.length] = { "distancia" : -1 , "RSSIavg" : nodegroup.nodeMACS[i].RSSIavg };
+						
+						for (var j=0; j< nodegroup.nodeMACS.length; j++) {
+							if (j !== i ) {
+								var b = centros[nodegroup.nodeMACS[j].nodeMAC];
+								var RSSI = buscarDatos("fromMAC="+nodegroup.nodeMACS[j].nodeMAC+"&nodeMAC="+nodegroup.nodeMACS[i].nodeMAC);
+								//alert(print_r(RSSI));
+								
+								for (var k=0; k < RSSI.nodeMACS.length; k++) {
+									if (RSSI.nodeMACS[k].nodeMAC === nodegroup.nodeMACS[i].nodeMAC)
+									{
+										taula[taula.length] = { "distancia" : distancia(a ,b), "RSSIavg" : RSSI.nodeMACS[k].RSSIavg};
+									}
+								}
+							}
+						}
+						
+						var xiu = [];
+						xiu = rocrssi(a, taula);
+						Dibuja(pen[i], nodegroup.nodeMACS[i].nodeMAC, xiu );	
+					}
+				}
+				
+				// Recupetamos los datos
+				function buscarDatos(condicion) {
+					var jsonData;
+					 jsonData= $.ajax({
+						url: "./getdata/nodegroup.php?"+condicion,
+						dataType:"json",
+						async: false
+						}).responseText;
+					return($.parseJSON(jsonData));
+				}
+				
+				// Aplicamos el algoritmo
+				function rocrssi(centro, taula) {
+					var i;
+					var dibujar = [];
+					//alert(print_r(taula));
+					taula.sort(function(a,b) { return 	(parseInt(b.RSSIavg,10) - parseInt(a.RSSIavg,10));});
+					alert("TAULA");
+					alert(print_r(taula));
+					for (i=0; i< taula.length; i++) {
+						if (taula[i].distancia < 0 ) {
+							if (i === 0 ) {
+								// tenemos que buscar la mínima de las distancias 
+					
+								taula.sort(function(a,b) { return 	(parseInt(a.distancia,10) - parseInt(b.distancia,10));})
+								alert("hola");
+								alert(print_r(taula));
+								
+								dibujar[0] = { "centro" : centro, "radio" : taula[1].distancia };
+								break;
+							} else if ( i === (taula.length-1)) {
+								dibujar = [];
+								break;
+							} else {
+								alert("hola");
+								dibujar[0] = { "centro" : centro, "radio" : taula[i-1].distancia };
+								dibujar[1] = { "centro" : centro, "radio" : taula[i+1].distancia };
+								break;
+							}
+						}
+					}
+					
+					//for (i=0; i< dibujar.length; i++) {
+					//	alert(print_r(dibujar));
+					//}
+				
+					return dibujar;
+				}
+				
+			
+				function Dibuja(pen, nodeMAC, tabla) {
+					var swfirst = true;
+					for (i=0;i<tabla.length;i++) {
+						if (swfirst) {
+							swfirst = false;
+							gr.drawText(nodeMAC, tabla[i].centro);
+						}	
+						gr.drawCircle(pen, tabla[i].centro, tabla[i].radio);
+					}
+					
+				}
+				
+				function distancia(a, b) {
+					var dis = Math.sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y));
+					return (Math.round( dis *100) / 100);
+				}
+				
+				
+				function print_r(arr,level) {
+var dumped_text = "";
+if(!level) level = 0;
+
+//The padding given at the beginning of the line.
+var level_padding = "";
+for(var j=0;j<level+1;j++) level_padding += "    ";
+
+if(typeof(arr) == 'object') { //Array/Hashes/Objects 
+    for(var item in arr) {
+        var value = arr[item];
+
+        if(typeof(value) == 'object') { //If it is an array,
+            dumped_text += level_padding + "'" + item + "' ...\n";
+            dumped_text += print_r(value,level+1);
+        } else {
+            dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
+        }
+    }
+} else { //Stings/Chars/Numbers etc.
+    dumped_text = "===>"+arr+"<===("+typeof(arr)+")";
+}
+return dumped_text;
+}
+				
+				
+			</script>
+		 
+	</head>
+	<body onload="load()">
+		<div id="texto" style="position:absolute;top:0;left:0">Hola</div></div>
+		<div id="canvas" style="position:relative;width:1200px;height:800px;"></div> 
+	</body>
+</html>
