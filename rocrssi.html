@@ -2,30 +2,61 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<script type="text/JavaScript" src="./js/rutina.js"></script>
 		<script type="text/JavaScript" src="./js/jsDraw2D.js"></script>
 		<script type="text/javascript" src="http://code.jquery.com/jquery-1.6.2.min.js"></script>
 			<script type="text/JavaScript">
 				
-			
-				//var taula={};
 				var gr;
 				var col = [];
 				var pen = [];
-
-				
+				var fuente;
+			
+				// función principal 
 				function load() {
-					Prepara();
-					LoadData();
-					//Dibuja();
+					
+					
+					
+					
+					var tabla_nodegroup = [] ;// Array donde esta los dats de RSSI de un estación con respecto a los NodeCapture
+					var tabla_nodos = [];     // Array donde encontraremos los nodos que se utilizan para localizar la posición
+					var tabla_circulos = [];  // Array donde guardaremos los centros y radios de las circunferencias
+					                          // que tenemos que dibujar 
+ 					Prepara();
+					var fromMAC = rutinagetUrlVars()["fromMAC"];
+					tabla_nodegroup = buscarDatos("fromMAC="+fromMAC);
+					tabla_nodos = LoadTablaNodos(tabla_nodegroup);
+					tabla_circulos=LoadTablaCirculos(tabla_nodegroup, tabla_nodos);
+					// Dibujamos la circunferencia
+					DibujaNodeCapture(tabla_nodos);
+					DibujaCircunferencias(tabla_circulos);
+					// Con la tabla de circulos, vamos a encontrar la localización del dispositivo
 				}
-				
-				
+
+				// Encontraremos los nodos que escuchan a una determinada estación
+				function LoadTablaNodos(nodegroup) {
+					var centros = {};
+					var i;
+					// Primero creamos una lista con las localizaciones d
+					// de los NodeCapture
+					
+					if (nodegroup == null) {
+						return null;
+					}
+					
+					for (var i = 0;i<nodegroup.nodeMACS.length;i++) {
+						centros[nodegroup.nodeMACS[i].nodeMAC] = new jsPoint(nodegroup.nodeMACS[i].x,nodegroup.nodeMACS[i].y);
+					}					
+					return centros;
+				}
+			
+				// Función que prepara el lienzo para poder dibujar los ejes, círculos, etc.
 				function Prepara() {
 					//Create jsGraphics object
 					gr = new jsGraphics(document.getElementById("canvas"));
 					gr.setCoordinateSystem("cartecian")
 					gr.setOrigin(new jsPoint(600,400));
-					gr.setScale(30);
+					gr.setScale(50);
 					gr.showGrid();
 
 					col[0] = new jsColor("red");
@@ -38,51 +69,55 @@
 						pen[i]= new jsPen(col[i],3);
 					}
 					
+					fuente = jsFont("Verdana", "normal", "x-small", "normal")
 				}
 				
-				function LoadData() {
-					var nodegroup=[];
-					var centros = {};
+				// Función 
+				function LoadTablaCirculos(nodegroup, centros) {
+					var tabla_centro_radio = [];
+					// Construimos la tabla que relaciona RSSI i distancia para comparar, segun la rutina
+					// ROCRSSI
 					var i;
-					var j;
-					nodegroup = buscarDatos("fromMAC=50:7E:5D:43:15:15");
 					
-					
-					//centros = MatrizCentros(nodegroup);
-					
-					// Primero creamos una lista con las localizaciones d
-					// de los NodeCapture
-					for (var i = 0;i<nodegroup.nodeMACS.length;i++) {
-						centros[nodegroup.nodeMACS[i].nodeMAC] = new jsPoint(nodegroup.nodeMACS[i].x,nodegroup.nodeMACS[i].y);
+					if (nodegroup == null || centros ==null ) {
+						return null;
 					}
 					
-				
-					var i;
 					for (var i=0;i<nodegroup.nodeMACS.length;i++) {
 						var taula = [];
 						//var a = new jsPoint(nodegroup.nodeMACS[i].x,nodegroup.nodeMACS[i].y);
-						var a = centros[nodegroup.nodeMACS[i].nodeMAC];
-						taula[taula.length] = { "distancia" : -1 , "RSSIavg" : nodegroup.nodeMACS[i].RSSIavg };
-						
+						var centro_a = centros[nodegroup.nodeMACS[i].nodeMAC];
+
+						var swfirst = true;
 						for (var j=0; j< nodegroup.nodeMACS.length; j++) {
 							if (j !== i ) {
-								var b = centros[nodegroup.nodeMACS[j].nodeMAC];
+								var centro_b = centros[nodegroup.nodeMACS[j].nodeMAC];
 								var RSSI = buscarDatos("fromMAC="+nodegroup.nodeMACS[j].nodeMAC+"&nodeMAC="+nodegroup.nodeMACS[i].nodeMAC);
-								//alert(print_r(RSSI));
-								
-								for (var k=0; k < RSSI.nodeMACS.length; k++) {
-									if (RSSI.nodeMACS[k].nodeMAC === nodegroup.nodeMACS[i].nodeMAC)
-									{
-										taula[taula.length] = { "distancia" : distancia(a ,b), "RSSIavg" : RSSI.nodeMACS[k].RSSIavg};
+								if ( RSSI != null ) {
+									for (var k=0; k < RSSI.nodeMACS.length; k++) {
+										if (RSSI.nodeMACS[k].nodeMAC === nodegroup.nodeMACS[i].nodeMAC)
+										{
+											if (swfirst == true) {
+												swfirst = false;
+												taula[taula.length] = { "distancia" : -1 , "RSSIavg" : nodegroup.nodeMACS[i].RSSIavg };
+											}
+											taula[taula.length] = { "distancia" : distancia(centro_a ,centro_b), "RSSIavg" : RSSI.nodeMACS[k].RSSIavg};
+										}
 									}
 								}
 							}
 						}
 						
-						var xiu = [];
-						xiu = rocrssi(a, taula);
-						Dibuja(pen[i], nodegroup.nodeMACS[i].nodeMAC, xiu );	
+
+						var aux = rocrssi(centro_a, taula);
+						if (aux !=null ) {
+							for (var l=0; l < aux.length; l++ ) {
+								tabla_centro_radio[tabla_centro_radio.length] = { "centro" : aux[l].centro, "radio" : aux[l].radio } 
+							}
+						}
 					}
+					
+					return tabla_centro_radio;
 				}
 				
 				// Recupetamos los datos
@@ -93,90 +128,131 @@
 						dataType:"json",
 						async: false
 						}).responseText;
-					return($.parseJSON(jsonData));
+					 
+					if (jsonData == null) {
+						return null
+					} else { 
+						return($.parseJSON(jsonData));
+					}
 				}
 				
-				// Aplicamos el algoritmo
+				// Aplicamos el algoritmo de ROCRSSI
 				function rocrssi(centro, taula) {
 					var i;
 					var dibujar = [];
 					//alert(print_r(taula));
-					taula.sort(function(a,b) { return 	(parseInt(b.RSSIavg,10) - parseInt(a.RSSIavg,10));});
-					alert("TAULA");
+					
+					if (taula == null ) {
+						return null;
+					}
+					
 					alert(print_r(taula));
+					taula.sort(function(a,b) { return 	(parseInt(b.RSSIavg,10) - parseInt(a.RSSIavg,10));});
+					alert(print_r(taula));
+					
+					//alert(print_r(taula));
 					for (i=0; i< taula.length; i++) {
 						if (taula[i].distancia < 0 ) {
 							if (i === 0 ) {
 								// tenemos que buscar la mínima de las distancias 
-					
 								taula.sort(function(a,b) { return 	(parseInt(a.distancia,10) - parseInt(b.distancia,10));})
-								alert("hola");
-								alert(print_r(taula));
-								
+								//alert(print_r(taula));
 								dibujar[0] = { "centro" : centro, "radio" : taula[1].distancia };
 								break;
 							} else if ( i === (taula.length-1)) {
 								dibujar = [];
 								break;
 							} else {
-								alert("hola");
 								dibujar[0] = { "centro" : centro, "radio" : taula[i-1].distancia };
 								dibujar[1] = { "centro" : centro, "radio" : taula[i+1].distancia };
 								break;
 							}
 						}
 					}
-					
-					//for (i=0; i< dibujar.length; i++) {
-					//	alert(print_r(dibujar));
-					//}
-				
+					//(print_r(dibujar));				
 					return dibujar;
 				}
 				
-			
-				function Dibuja(pen, nodeMAC, tabla) {
-					var swfirst = true;
-					for (i=0;i<tabla.length;i++) {
-						if (swfirst) {
-							swfirst = false;
-							gr.drawText(nodeMAC, tabla[i].centro);
-						}	
-						gr.drawCircle(pen, tabla[i].centro, tabla[i].radio);
+				// Dibujamos los NodeCapture
+				function DibujaNodeCapture(tabla) {
+					var i = 0;
+					
+					if (tabla == null) {
+						return false;
 					}
 					
+					// dibujamos el NodeCapture en la pantalla
+					for(var item in tabla) {
+						var value = tabla[item];
+						var coord = "("+value.x+","+value.y+")";
+						gr.drawText(coord,value, fuente, "", 1,"left");
+						i++;
+					}
+					return true;
 				}
 				
+				// Dibujamos las circunferencias buscadas 
+				function DibujaCircunferencias(tabla) {
+					var color = -1;
+					var centro_ant = null;
+				
+					//alert(print_r(tabla));
+				
+					if (tabla == null ) {
+						return false;
+					}
+				
+					for (var i=0;i<tabla.length;i++) {
+						//alert(i);
+						if (tabla[i].centro != centro_ant) {
+							color++;
+						} 
+						gr.drawCircle(pen[color], tabla[i].centro, tabla[i].radio);
+						centro_ant=tabla[i].centro;
+					}
+					return true;
+				}
+				
+				// Función que calcula la distancia entre dos puntos.
 				function distancia(a, b) {
 					var dis = Math.sqrt((a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y));
+					//alert(dis);
+					
 					return (Math.round( dis *100) / 100);
 				}
 				
+				// Función que nos retorna una ecuación general de la circunferencia 
+				function EcuacionCircunferencia(centro, radio) {
+					var D = -2 * centro.x;
+					var E = -2 * centro.y;
+					var F =  (centro.x * centro.x) + (centro.y * centro.y) - radio * radio;
+					var ecuacion = [ 1,1,D,E,F];
+					return ecuacion;		
+				}
 				
+				// Función para imprimir el contenido de una tabla/objeto o combinación
 				function print_r(arr,level) {
-var dumped_text = "";
-if(!level) level = 0;
+					var dumped_text = "";
+					if(!level) level = 0;
+					//The padding given at the beginning of the line.
+					var level_padding = "";
+					for(var j=0;j<level+1;j++) level_padding += "    ";
+						if(typeof(arr) == 'object') { //Array/Hashes/Objects 
+							for(var item in arr) {
+								var value = arr[item];
 
-//The padding given at the beginning of the line.
-var level_padding = "";
-for(var j=0;j<level+1;j++) level_padding += "    ";
-
-if(typeof(arr) == 'object') { //Array/Hashes/Objects 
-    for(var item in arr) {
-        var value = arr[item];
-
-        if(typeof(value) == 'object') { //If it is an array,
-            dumped_text += level_padding + "'" + item + "' ...\n";
-            dumped_text += print_r(value,level+1);
-        } else {
-            dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
-        }
-    }
-} else { //Stings/Chars/Numbers etc.
-    dumped_text = "===>"+arr+"<===("+typeof(arr)+")";
-}
-return dumped_text;
-}
+								if(typeof(value) == 'object') { //If it is an array,
+									dumped_text += level_padding + "'" + item + "' ...\n";
+									dumped_text += print_r(value,level+1);
+								} else {
+									dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
+								}
+							}
+						} else { //Stings/Chars/Numbers etc.
+							dumped_text = "===>"+arr+"<===("+typeof(arr)+")";
+						}
+						return dumped_text;
+					}
 				
 				
 			</script>
