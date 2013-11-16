@@ -50,7 +50,7 @@
 	  function loadData() {
 		  // Create the data table.
           var jsonData = $.ajax({
-          url: "./getdata/listfield.php?field=nodeMAC&queryfield=fromMAC&queryvalue="+MAC+"&interval="+interval,
+          url: "./getdata/listfield.php?field=nodeMAC&queryfield=fromMAC&queryvalue="+MAC,
           dataType:"json",
           async: false
           }).responseText;

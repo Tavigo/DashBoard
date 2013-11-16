@@ -55,7 +55,7 @@
 					//Create jsGraphics object
 					gr = new jsGraphics(document.getElementById("canvas"));
 					gr.setCoordinateSystem("cartecian")
-					gr.setOrigin(new jsPoint(600,400));
+					gr.setOrigin(new jsPoint(350,350));
 					gr.setScale(50);
 					gr.showGrid();
 
@@ -70,6 +70,10 @@
 					}
 					
 					fuente = jsFont("Verdana", "normal", "x-small", "normal")
+					
+					gr.drawText("S",new jsPoint(2.07, 2.07), fuente, "", 1,"left");
+						i++;
+					
 				}
 				
 				// Función 
@@ -115,7 +119,9 @@
 								tabla_centro_radio[tabla_centro_radio.length] = { "centro" : aux[l].centro, "radio" : aux[l].radio } 
 							}
 						}
+						//alert(nodegroup.nodeMACS[i].nodeMAC);
 					}
+					
 					
 					return tabla_centro_radio;
 				}
@@ -146,9 +152,9 @@
 						return null;
 					}
 					
-					alert(print_r(taula));
+					//alert(print_r(centro) + " " + print_r(taula));
 					taula.sort(function(a,b) { return 	(parseInt(b.RSSIavg,10) - parseInt(a.RSSIavg,10));});
-					alert(print_r(taula));
+					//alert(print_r(centro) + " " + print_r(taula));
 					
 					//alert(print_r(taula));
 					for (i=0; i< taula.length; i++) {
@@ -195,18 +201,23 @@
 				function DibujaCircunferencias(tabla) {
 					var color = -1;
 					var centro_ant = null;
-				
-					//alert(print_r(tabla));
-				
+					
 					if (tabla == null ) {
 						return false;
+					} else {
+						if (tabla.length <=0) {
+							alert("No podemos encontrar la localizacion del dispositivo.\n\nLos Datos obtenidos, no permiten realizar la representacion");
+							return false;
+						}
 					}
+					
 				
 					for (var i=0;i<tabla.length;i++) {
 						//alert(i);
 						if (tabla[i].centro != centro_ant) {
 							color++;
-						} 
+							alert("Dibujamos circunferencias con centro en: \n" + print_r(tabla[i].centro));
+						}
 						gr.drawCircle(pen[color], tabla[i].centro, tabla[i].radio);
 						centro_ant=tabla[i].centro;
 					}
@@ -259,7 +270,6 @@
 		 
 	</head>
 	<body onload="load()">
-		<div id="texto" style="position:absolute;top:0;left:0">Hola</div></div>
 		<div id="canvas" style="position:relative;width:1200px;height:800px;"></div> 
 	</body>
 </html>
